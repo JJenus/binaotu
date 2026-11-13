@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FamilyGraph, KinshipError, availableRelations, buildTiers, generationRows, planAddRelative, relate, viaCandidates } from './index'
+import { FamilyGraph, KinshipError, availableRelations, buildTiers, generationRows, planAddRelative, relate, relationPath, viaCandidates, wouldDisconnect } from './index'
 import { sampleFamily } from './fixture'
 
 const p = (givenName: string, sex: 'male' | 'female' | 'unknown' = 'unknown') => ({ givenName, sex })
@@ -147,5 +147,35 @@ describe('generationRows', () => {
     expect(r2.indexOf('c1')).toBeLessThan(r2.indexOf('c3')) // d2’s children before d3’s, following their parents’ order
     expect(Math.abs(rows[1]!.indexOf('d1') - rows[1]!.indexOf('m1'))).toBe(1)
     expect(new Set(rows.flat()).size).toBe(24)
+  })
+})
+
+describe('relationPath', () => {
+  const g = sampleFamily()
+  it('finds the shortest chain through the family', () => {
+    expect(relationPath(g, 'e1', 'c1')).toEqual(['e1', 'd1', 'a1', 'd2', 'c1'])
+    expect(relationPath(g, 'e1', 'w1')).toEqual(['e1', 'w1'])
+    expect(relationPath(g, 'e1', 'e1')).toEqual(['e1'])
+  })
+  it('is null for unconnected people and throws for unknown ones', () => {
+    const lone = g.clone(); lone.addPerson({ id: 'x', sex: 'male' })
+    expect(relationPath(lone, 'e1', 'x')).toBeNull()
+    expect(() => relationPath(g, 'e1', 'nobody')).toThrow(KinshipError)
+  })
+})
+
+describe('wouldDisconnect', () => {
+  const g = sampleFamily()
+  it('is empty when the rest stays connected', () => {
+    expect(wouldDisconnect(g, 'e2')).toEqual([])
+    expect(wouldDisconnect(g, 'k3')).toEqual([])
+  })
+  it('lists the smaller group that would be cut off', () => {
+    const chain = new FamilyGraph({
+      persons: ['a', 'b', 'c', 'd'].map(id => ({ id, sex: 'unknown' as const })),
+      parentLinks: [{ childId: 'b', parentId: 'a' }, { childId: 'c', parentId: 'b' }, { childId: 'd', parentId: 'c' }], unions: []
+    })
+    expect(wouldDisconnect(chain, 'b')).toEqual(['a'])
+    expect(wouldDisconnect(chain, 'a')).toEqual([])
   })
 })
