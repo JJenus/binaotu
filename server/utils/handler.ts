@@ -7,13 +7,13 @@ const KINSHIP_STATUS: Record<KinshipErrorCode, number> = { NOT_FOUND: 404, INVAL
 
 function toHttpError(e: unknown) {
   if (e instanceof ZodError) {
-    return createError({ statusCode: 422, statusMessage: 'Check the highlighted fields', data: { issues: e.issues.map(i => ({ path: i.path.join('.'), message: i.message })) } })
+    return createError({ statusCode: 422, message: 'Check the highlighted fields', data: { issues: e.issues.map(i => ({ path: i.path.join('.'), message: i.message })) } })
   }
-  if (e instanceof AppError) return createError({ statusCode: e.status, statusMessage: e.message })
-  if (e instanceof KinshipError) return createError({ statusCode: KINSHIP_STATUS[e.code], statusMessage: e.message, data: { code: e.code } })
+  if (e instanceof AppError) return createError({ statusCode: e.status, message: e.message })
+  if (e instanceof KinshipError) return createError({ statusCode: KINSHIP_STATUS[e.code], message: e.message, data: { code: e.code } })
   if (isError(e)) return e
   console.error(e)
-  return createError({ statusCode: 500, statusMessage: 'Something went wrong on our side' })
+  return createError({ statusCode: 500, message: 'Something went wrong on our side' })
 }
 
 /** Wraps a handler so domain and validation errors become proper HTTP errors. */

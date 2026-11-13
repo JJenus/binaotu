@@ -13,9 +13,10 @@ let ready: Promise<Db> | undefined
 export function useDb(): Promise<Db> {
   ready ??= (async () => {
     const { databaseUrl } = useRuntimeConfig()
+    if (!databaseUrl && !import.meta.dev) console.warn('DATABASE_URL is not set: using embedded PGlite in .data/pglite. Set DATABASE_URL to a Postgres instance for real deployments.')
     const { db } = await createDb(databaseUrl || undefined, databaseUrl ? undefined : '.data/pglite')
     await runMigrations(db, await loadMigrations())
     return db
-  })()
+  })().catch((e) => { ready = undefined; throw e })
   return ready
 }

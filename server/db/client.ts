@@ -1,3 +1,4 @@
+import { mkdirSync } from 'node:fs'
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core'
 import * as schema from './schema'
 
@@ -22,6 +23,7 @@ export async function createDb(url?: string, dataDir?: string): Promise<DbHandle
   }
   const { drizzle } = await import('drizzle-orm/pglite')
   const { PGlite } = await import('@electric-sql/pglite')
+  if (dataDir) mkdirSync(dataDir, { recursive: true })
   const client = new PGlite(dataDir)
   return { db: drizzle(client, { schema }) as unknown as Db, close: () => client.close() }
 }
