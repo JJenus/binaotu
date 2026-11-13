@@ -2,7 +2,7 @@
 import type { PersonDTO } from '#shared/types'
 import { HIDDEN, gridSlots, ringSlots, ringSpacing, stageHeight, type StageMode } from '~/utils/stageLayout'
 
-const props = defineProps<{ persons: PersonDTO[], ring: string[], gridRows: string[][], mode: StageMode, anchorId: string, centeredId: string }>()
+const props = defineProps<{ persons: PersonDTO[], ring: string[], gridRows: string[][], mode: StageMode, anchorId: string, centeredId: string, dimmed?: Set<string> }>()
 const emit = defineEmits<{ select: [id: string], centered: [id: string], open: [id: string] }>()
 
 const el = ref<HTMLElement>()
@@ -22,7 +22,7 @@ const slots = computed(() => props.mode === 'ring' ? ringSlots(props.ring, cente
 const slotOf = (id: string) => slots.value.get(id) ?? HIDDEN
 const styleOf = (id: string) => {
   const s = slotOf(id)
-  return { transform: `translate(${s.x}px, ${s.y}px) scale(${s.s})`, opacity: s.o, zIndex: s.z, pointerEvents: s.o > .05 ? 'auto' : 'none', '--inv': Math.min(2.6, 1 / s.s) } as Record<string, string | number>
+  return { transform: `translate(${s.x}px, ${s.y}px) scale(${s.s})`, opacity: s.o * (props.dimmed?.has(id) ? .2 : 1), zIndex: s.z, pointerEvents: s.o > .05 ? 'auto' : 'none', '--inv': Math.min(2.6, 1 / s.s) } as Record<string, string | number>
 }
 
 function tap(id: string) {

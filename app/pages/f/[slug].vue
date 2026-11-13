@@ -1,7 +1,9 @@
 <script setup lang="ts">
 const slug = String(useRoute().params.slug)
 const { tree, graph, people, gridRows, addRelative, mutation } = await useFamilyTree(slug)
-const view = useTreeView(graph)
+const view = useTreeView(graph, gridRows)
+const persons = computed(() => tree.value.persons)
+const years = useYearRange(persons)
 
 const profileId = ref<string | null>(null)
 const addingFor = ref<string | null>(null)
@@ -33,7 +35,7 @@ useHead({ title: () => `${tree.value.family.name} — Binaotu` })
     <div class="stagewrap">
       <TreeStage
         :persons="tree.persons" :ring="view.ring.value" :grid-rows="gridRows" :mode="view.mode.value"
-        :anchor-id="view.anchorId.value" :centered-id="view.centeredId.value"
+        :anchor-id="view.anchorId.value" :centered-id="view.centeredId.value" :dimmed="years.dimmed.value"
         @select="view.setAnchor" @centered="view.centeredId.value = $event" @open="profileId = $event"
       />
       <ViewToggle :model-value="view.mode.value" @update:model-value="view.setMode" />
@@ -51,11 +53,19 @@ useHead({ title: () => `${tree.value.family.name} — Binaotu` })
         <span class="rel">Tap anyone to centre them</span>
       </div>
 
-      <TierChips v-if="view.mode.value === 'ring'" :chips="view.chips.value" :active="view.tierIndex.value" :people="people" @select="view.setTier" />
+      <TierChips v-if="view.mode.value === 'ring'" :chips="view.chips.value" :active="view.generation.value === null ? view.tierIndex.value : -1" :people="people" @select="view.setTier" />
       <div class="actions">
         <button v-if="view.mode.value === 'ring'" class="btn" @click="profileId = shown.id">Open profile</button>
         <button class="btn ghost" @click="startAdd(shown.id)">Add a relative</button>
       </div>
+    </div>
+
+    <div class="filters">
+      <GenerationPills :pills="view.generationPills.value" :active="view.mode.value === 'ring' ? view.generation.value : null" @select="view.setGeneration" />
+      <YearRange
+        v-if="years.available.value && years.bounds.value" v-model="years.span.value" :min="years.bounds.value[0]" :max="years.bounds.value[1]"
+        :total="tree.persons.length" :dimmed-count="years.dimmed.value.size" @reset="years.reset"
+      />
     </div>
 
     <ProfileSheet
@@ -85,4 +95,5 @@ h1 { margin: 0; font: 400 30px var(--display) }
 h2 { margin: 2px 0; font: 400 32px/1.05 var(--display) }
 .bar > :nth-child(2) { flex: 1; min-width: 240px }
 .actions { display: flex; gap: 10px; flex-wrap: wrap }
+.filters { display: flex; flex-wrap: wrap; gap: 14px 32px; align-items: flex-start; padding: 0 18px 32px }
 </style>
