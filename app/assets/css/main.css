@@ -1,0 +1,23 @@
+:root {
+  --bg: #d9d5cf; --bg2: #ece9e4; --ink: #1d1c1a; --muted: #6f6a62; --card: #fbfaf7; --line: #a9a49a; --on: #fbfaf7; --danger: #a3261b;
+  --sans: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  box-sizing: border-box;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #171614; --bg2: #24221f; --ink: #ece9e3; --muted: #9a958c; --card: #22211e; --line: #57534c; --on: #171614; --danger: #ff8a7a }
+}
+*, *::before, *::after { box-sizing: inherit }
+html { scroll-padding-top: env(safe-area-inset-top, 0px) }
+body { margin: 0; min-height: 100vh; color: var(--ink); font: 400 15px/1.5 var(--sans); background: radial-gradient(120% 90% at 50% 15%, var(--bg2), var(--bg)) fixed }
+a { color: inherit }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+.page { max-width: 760px; margin: 0 auto; padding: calc(28px + env(safe-area-inset-top, 0px)) 20px calc(40px + env(safe-area-inset-bottom, 0px)) }
+.brand { font: 400 28px var(--display); text-decoration: none }
+.btn { display: inline-flex; align-items: center; justify-content: center; padding: 11px 20px; border: 1px solid var(--ink); border-radius: 99px; background: var(--ink); color: var(--on); font: inherit; font-weight: 600; text-decoration: none; cursor: pointer }
+.btn.ghost { background: none; color: var(--ink) }
+.btn:disabled { opacity: .6; cursor: progress }
+.field { display: grid; gap: 6px; font-size: 14px; font-weight: 500 }
+.field input, .field select, .field textarea { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font: inherit; font-weight: 400 }
+.error { color: var(--danger); font-size: 13px; font-weight: 400 }
