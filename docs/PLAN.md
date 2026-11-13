@@ -13,6 +13,7 @@ person* and the system links siblings, aunts, uncles and cousins itself.
 | API | Nitro routes in `server/api` | Thin handlers, no separate service yet |
 | DB | PostgreSQL via Drizzle ORM | Real SQL; PGlite (in-process Postgres) is used when `DATABASE_URL` is unset, so dev and tests need no setup |
 | Validation | Zod, shared by server and client | One schema, one source of truth |
+| Package manager | pnpm | Fast, strict dependency tree |
 | Tests | Vitest | The kinship engine is pure and fully unit-tested |
 
 The domain logic lives in `shared/kinship` as pure TypeScript with no framework
