@@ -1,4 +1,4 @@
-import type { AddRelativeInput, PersonInput } from '../schemas'
+import type { AddRelativeInput, PersonInput, RelationKind } from '../schemas'
 import type { ParentKind, UnionKind } from '../types'
 import { KinshipError } from './errors'
 import type { FamilyGraph } from './graph'
@@ -90,6 +90,32 @@ class Planner {
   }
 }
 
+export interface ViaCandidates { parents: string[], siblings: string[], auncles: string[], children: string[] }
+
+/** The people a composite relation can go "via" for this anchor (e.g. which parent’s sibling an uncle is). */
+export function viaCandidates(g: FamilyGraph, anchorId: string): ViaCandidates {
+  const parents = g.parents(anchorId)
+  return {
+    parents,
+    siblings: g.siblings(anchorId).map(s => s.id),
+    auncles: parents.flatMap(p => g.siblings(p).map(s => s.id)),
+    children: g.children(anchorId)
+  }
+}
+
+/** Relations that can currently be added for this anchor; the form only offers these. */
+export function availableRelations(g: FamilyGraph, anchorId: string): RelationKind[] {
+  const v = viaCandidates(g, anchorId)
+  return [
+    'child', 'partner', 'sibling',
+    ...(v.parents.length < 2 ? ['parent' as const] : []),
+    ...(v.parents.length ? ['auncle' as const, 'grandparent' as const] : []),
+    ...(v.siblings.length ? ['nibling' as const] : []),
+    ...(v.auncles.length ? ['cousin' as const] : []),
+    ...(v.children.length ? ['grandchild' as const] : [])
+  ]
+}
+
 /**
  * Works out everything needed to add `input.person` relative to `anchorId`:
  * the new person, any placeholder parents, parent links and unions.
@@ -99,19 +125,18 @@ export function planAddRelative(graph: FamilyGraph, anchorId: string, input: Add
   const g = graph.clone()
   g.person(anchorId)
   const p = new Planner(g, newId)
-  const parents = g.parents(anchorId)
-  const siblings = g.siblings(anchorId).map(s => s.id)
+  const via = viaCandidates(g, anchorId)
   let focus: string
   switch (input.relation) {
     case 'child': focus = p.child(anchorId, input.person, input.otherParentId); break
     case 'parent': focus = p.parent(anchorId, input.person); break
     case 'partner': focus = p.partner(anchorId, input.person, input.kind ?? 'partnership'); break
     case 'sibling': focus = p.sibling(anchorId, input.person, input.kind ?? 'full', input.sharedParentId); break
-    case 'auncle': focus = p.sibling(need(input.viaParentId, parents, 'Choose one of their parents'), input.person, 'full'); break
-    case 'nibling': focus = p.child(need(input.viaSiblingId, siblings, 'Choose one of their siblings'), input.person); break
-    case 'cousin': focus = p.child(need(input.viaAuncleId, parents.flatMap(x => g.siblings(x).map(s => s.id)), 'Choose an aunt or uncle of this person'), input.person); break
-    case 'grandparent': focus = p.parent(need(input.viaParentId, parents, 'Choose one of their parents'), input.person); break
-    case 'grandchild': focus = p.child(need(input.viaChildId, g.children(anchorId), 'Choose one of their children'), input.person); break
+    case 'auncle': focus = p.sibling(need(input.viaParentId, via.parents, 'Choose one of their parents'), input.person, 'full'); break
+    case 'nibling': focus = p.child(need(input.viaSiblingId, via.siblings, 'Choose one of their siblings'), input.person); break
+    case 'cousin': focus = p.child(need(input.viaAuncleId, via.auncles, 'Choose an aunt or uncle of this person'), input.person); break
+    case 'grandparent': focus = p.parent(need(input.viaParentId, via.parents, 'Choose one of their parents'), input.person); break
+    case 'grandchild': focus = p.child(need(input.viaChildId, via.children, 'Choose one of their children'), input.person); break
   }
   p.plan.focusId = focus
   return p.plan

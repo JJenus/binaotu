@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FamilyGraph, KinshipError, buildTiers, planAddRelative, relate } from './index'
+import { FamilyGraph, KinshipError, availableRelations, buildTiers, generationRows, planAddRelative, relate, viaCandidates } from './index'
 import { sampleFamily } from './fixture'
 
 const p = (givenName: string, sex: 'male' | 'female' | 'unknown' = 'unknown') => ({ givenName, sex })
@@ -118,5 +118,34 @@ describe('planAddRelative', () => {
     ['unknown anchor', 'nobody', { relation: 'child', person: p('X') }, 'NOT_FOUND']
   ] as const)('rejects %s', (_n, anchor, input, code) => {
     try { planAddRelative(g, anchor, input as any, ids()); expect.unreachable() } catch (e) { expect(e).toBeInstanceOf(KinshipError); expect((e as KinshipError).code).toBe(code) }
+  })
+})
+
+describe('availableRelations and viaCandidates', () => {
+  const g = sampleFamily()
+  it('offers only what the graph allows', () => {
+    expect(availableRelations(g, 'e1')).not.toContain('parent') // already has two
+    expect(availableRelations(g, 'e1')).toEqual(expect.arrayContaining(['child', 'partner', 'sibling', 'auncle', 'nibling', 'cousin', 'grandparent', 'grandchild']))
+    expect(availableRelations(g, 'a1')).toEqual(expect.arrayContaining(['parent']))
+    expect(availableRelations(g, 'a1')).not.toContain('auncle')
+    expect(availableRelations(g, 'k3')).not.toContain('grandchild')
+  })
+  it('lists the intermediaries for composite relations', () => {
+    expect(viaCandidates(g, 'e1')).toMatchObject({ parents: ['d1', 'm1'], siblings: ['e2', 'e3'], auncles: expect.arrayContaining(['d2', 'd3', 'm2']), children: ['k1', 'k2'] })
+  })
+})
+
+describe('generationRows', () => {
+  const rows = generationRows(sampleFamily())
+  it('has one row per generation, oldest first', () => {
+    expect(rows.map(r => r.length)).toEqual([4, 8, 9, 3])
+    expect(rows[0]).toEqual(expect.arrayContaining(['a1', 'a2', 'b1', 'b2']))
+  })
+  it('puts a married-in partner next to their spouse and siblings under their parents', () => {
+    const r2 = rows[2]!
+    expect(Math.abs(r2.indexOf('e1') - r2.indexOf('w1'))).toBe(1)
+    expect(r2.indexOf('c1')).toBeLessThan(r2.indexOf('c3')) // d2’s children before d3’s, following their parents’ order
+    expect(Math.abs(rows[1]!.indexOf('d1') - rows[1]!.indexOf('m1'))).toBe(1)
+    expect(new Set(rows.flat()).size).toBe(24)
   })
 })
