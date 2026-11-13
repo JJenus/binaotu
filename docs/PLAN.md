@@ -82,7 +82,7 @@ sibling), so there is one implementation of each rule.
 
 ### Phase 1 — Core (current)
 - [x] Plan and project scaffold
-- [ ] Database schema, migrations, PGlite/Postgres client
+- [x] Database schema, migrations, PGlite/Postgres client
 - [ ] Kinship engine: graph, relationship labels, auto-link planner, tiers
 - [ ] API: search/create family, load tree, add relative, relationship between two people
 - [ ] Front API layer + composables
