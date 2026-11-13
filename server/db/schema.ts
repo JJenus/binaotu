@@ -1,9 +1,10 @@
 import { boolean, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { PARENT_KINDS, SEXES, UNION_KINDS, VISIBILITIES } from '../../shared/types'
 
-export const visibilityEnum = pgEnum('visibility', ['public', 'private'])
-export const sexEnum = pgEnum('sex', ['male', 'female', 'unknown'])
-export const parentKindEnum = pgEnum('parent_kind', ['biological', 'adoptive', 'step'])
-export const unionKindEnum = pgEnum('union_kind', ['marriage', 'partnership', 'other'])
+export const visibilityEnum = pgEnum('visibility', VISIBILITIES)
+export const sexEnum = pgEnum('sex', SEXES)
+export const parentKindEnum = pgEnum('parent_kind', PARENT_KINDS)
+export const unionKindEnum = pgEnum('union_kind', UNION_KINDS)
 
 export const families = pgTable('family', {
   id: uuid('id').primaryKey().defaultRandom(),
