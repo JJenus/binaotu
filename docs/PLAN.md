@@ -84,7 +84,7 @@ sibling), so there is one implementation of each rule.
 - [x] Plan and project scaffold
 - [x] Database schema, migrations, PGlite/Postgres client
 - [x] Kinship engine: graph, relationship labels, auto-link planner, tiers
-- [ ] API: search/create family, load tree, add relative, relationship between two people
+- [x] API: search/create family, load tree, add relative, relationship between two people
 - [ ] Front API layer + composables
 - [ ] Pages: search home, create family, family tree (ring and grid views)
 - [ ] Add-relative flow with auto-link
