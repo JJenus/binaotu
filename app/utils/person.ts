@@ -1,6 +1,6 @@
 import type { PersonDTO } from '#shared/types'
 
-export const displayName = (p: PersonDTO) => p.isPlaceholder ? 'Unknown' : [p.givenName, p.familyName].filter(Boolean).join(' ')
+export const displayName = (p: PersonDTO) => p.redacted ? 'Living relative' : p.isPlaceholder ? 'Unknown' : [p.givenName, p.familyName].filter(Boolean).join(' ')
 
 export const lifespan = (p: PersonDTO) =>
   p.deathYear ? `${p.birthYear ?? '?'}–${p.deathYear}` : p.birthYear ? `b. ${p.birthYear}` : 'Dates unknown'

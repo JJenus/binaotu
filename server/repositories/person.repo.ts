@@ -17,7 +17,8 @@ const personValues = (p: PersonInput) => ({
   deathYear: p.deathYear ?? null, birthPlace: p.birthPlace ?? null, notes: p.notes ?? null
 })
 
-export async function loadTree(db: Db, family: FamilyDTO): Promise<TreeDTO> {
+/** The full, unredacted tree. Callers decide what a viewer may see. */
+export async function loadTree(db: Db, family: FamilyDTO): Promise<Omit<TreeDTO, 'access'>> {
   const [people, links, couples] = await Promise.all([
     db.select(personColumns).from(persons).where(eq(persons.familyId, family.id)).orderBy(persons.birthYear, persons.givenName),
     db.select({ childId: parentLinks.childId, parentId: parentLinks.parentId, kind: parentLinks.kind })
@@ -25,7 +26,7 @@ export async function loadTree(db: Db, family: FamilyDTO): Promise<TreeDTO> {
     db.select({ id: unions.id, partnerAId: unions.partnerAId, partnerBId: unions.partnerBId, kind: unions.kind, startYear: unions.startYear, endYear: unions.endYear })
       .from(unions).where(eq(unions.familyId, family.id))
   ])
-  return { family, persons: people as PersonDTO[], parentLinks: links, unions: couples }
+  return { family, persons: people.map(p => ({ ...p, redacted: false })) as PersonDTO[], parentLinks: links, unions: couples }
 }
 
 /** Writes everything a plan describes. Call inside a transaction so a plan lands whole or not at all. */

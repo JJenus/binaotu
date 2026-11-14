@@ -21,6 +21,8 @@ export interface PersonDTO {
   birthPlace: string | null
   notes: string | null
   isPlaceholder: boolean
+  /** True when the viewer is not allowed to see this living person’s details. */
+  redacted: boolean
 }
 
 export interface ParentLinkDTO { childId: string, parentId: string, kind: ParentKind }
@@ -43,6 +45,8 @@ export interface FamilyDTO {
 }
 
 export interface FamilySummaryDTO extends FamilyDTO {
+  /** Set only on “my families” lists. */
+  role?: Role
   personCount: number
   minYear: number | null
   maxYear: number | null
@@ -50,6 +54,7 @@ export interface FamilySummaryDTO extends FamilyDTO {
 
 export interface TreeDTO {
   family: FamilyDTO
+  access: AccessDTO
   persons: PersonDTO[]
   parentLinks: ParentLinkDTO[]
   unions: UnionDTO[]
