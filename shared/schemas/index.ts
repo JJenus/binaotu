@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { PARENT_KINDS, SEXES, UNION_KINDS, VISIBILITIES } from '../types'
+import { PARENT_KINDS, ROLES, SEXES, UNION_KINDS, VISIBILITIES } from '../types'
 
 const id = z.string().uuid()
 const year = z.number().int().min(1000).max(2200)
@@ -44,8 +44,19 @@ export const addRelativeSchema = z.discriminatedUnion('relation', [
   relative('grandchild', { viaChildId: id })
 ])
 
+export const registerSchema = z.object({
+  name: z.string().trim().min(1, 'Enter your name').max(80),
+  email: z.string().trim().toLowerCase().email('Enter a valid email address').max(200),
+  password: z.string().min(8, 'Use at least 8 characters').max(128)
+})
+export const loginSchema = z.object({ email: z.string().trim().toLowerCase().email('Enter a valid email address'), password: z.string().min(1, 'Enter your password').max(128) })
+export const inviteSchema = z.object({ role: z.enum(['editor', 'viewer']) })
+export const memberRoleSchema = z.object({ role: z.enum(ROLES) })
+
 export const relationshipQuerySchema = z.object({ a: id, b: id })
 
+export type RegisterInput = z.input<typeof registerSchema>
+export type LoginInput = z.input<typeof loginSchema>
 export type PersonInput = z.input<typeof personInputSchema>
 export type CreateFamilyInput = z.input<typeof createFamilySchema>
 export type AddRelativeInput = z.input<typeof addRelativeSchema>
