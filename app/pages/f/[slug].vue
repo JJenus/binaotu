@@ -9,12 +9,20 @@ const profileId = ref<string | null>(null)
 const addingFor = ref<string | null>(null)
 const profile = useProfile(graph, people, profileId)
 const options = useRelativeOptions(graph, people, addingFor)
+const finder = useRelationFinder(graph, people)
+const finderOpen = ref(false)
 
 const shown = computed(() => people.value.get(view.mode.value === 'ring' ? view.centeredId.value : view.anchorId.value)!)
 const position = computed(() => `${String(view.ring.value.indexOf(shown.value.id) + 1).padStart(2, '0')} of ${view.ring.value.length}`)
 const surname = computed(() => tree.value.family.name)
 const anchor = computed(() => people.value.get(view.anchorId.value)!)
 
+function openFinder() {
+  finder.from.value = shown.value.id
+  finder.to.value = view.anchorId.value !== shown.value.id ? view.anchorId.value : (view.ring.value.find(id => id !== shown.value.id) ?? shown.value.id)
+  finderOpen.value = true
+}
+function showFromFinder(id: string) { finderOpen.value = false; view.setAnchor(id) }
 function jump(id: string) { profileId.value = null; view.setAnchor(id) }
 function startAdd(id: string) { profileId.value = null; mutation.error.value = null; mutation.issues.value = {}; addingFor.value = id }
 async function submitRelative(input: Parameters<typeof addRelative>[1]) {
@@ -57,6 +65,7 @@ useHead({ title: () => `${tree.value.family.name} — Binaotu` })
       <div class="actions">
         <button v-if="view.mode.value === 'ring'" class="btn" @click="profileId = shown.id">Open profile</button>
         <button class="btn ghost" @click="startAdd(shown.id)">Add a relative</button>
+        <button class="btn ghost" @click="openFinder">How are we related?</button>
       </div>
     </div>
 
@@ -72,6 +81,9 @@ useHead({ title: () => `${tree.value.family.name} — Binaotu` })
       v-if="profile.person.value" :person="profile.person.value" :lines="profile.lines.value" :family-name="surname"
       @close="profileId = null" @jump="jump" @branch="jump" @add="startAdd"
     />
+    <AppModal v-if="finderOpen" title="How are we related?" @close="finderOpen = false">
+      <RelationFinder v-model:from="finder.from.value" v-model:to="finder.to.value" :options="finder.options.value" :result="finder.result.value" @swap="finder.swap" @show="showFromFinder" />
+    </AppModal>
     <AppModal v-if="addingFor" :title="`Add a relative of ${displayName(people.get(addingFor)!)}`" @close="addingFor = null">
       <AddRelativeForm
         :anchor-name="displayName(people.get(addingFor)!)" :family-name="people.get(addingFor)!.familyName ?? ''"
