@@ -96,7 +96,7 @@ sibling), so there is one implementation of each rule.
 - [x] "How are we related?" between any two people
 - [x] Person profile: birthplace and notes (partial dates still to do)
 
-### Phase 3 — Edit and quality
+### Phase 3 — Edit and quality (current)
 - [x] Edit and delete person (removal is refused when it would strand relatives; orphaned placeholders are tidied)
 - [ ] Duplicate detection and merge
 - [ ] Photo upload, GEDCOM import/export
