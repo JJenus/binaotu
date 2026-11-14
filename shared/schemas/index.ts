@@ -4,7 +4,7 @@ import { PARENT_KINDS, SEXES, UNION_KINDS, VISIBILITIES } from '../types'
 const id = z.string().uuid()
 const year = z.number().int().min(1000).max(2200)
 
-export const personInputSchema = z.object({
+const personFields = z.object({
   givenName: z.string().trim().min(1, 'Enter a first name').max(80),
   familyName: z.string().trim().max(80).nullish(),
   sex: z.enum(SEXES).default('unknown'),
@@ -12,7 +12,10 @@ export const personInputSchema = z.object({
   deathYear: year.nullish(),
   birthPlace: z.string().trim().max(120).nullish(),
   notes: z.string().trim().max(2000).nullish()
-}).refine(p => p.birthYear == null || p.deathYear == null || p.deathYear >= p.birthYear, {
+})
+
+/** Used for adding a person and for editing one (the whole person is sent on edit). */
+export const personInputSchema = personFields.refine(p => p.birthYear == null || p.deathYear == null || p.deathYear >= p.birthYear, {
   message: 'Death year cannot be before birth year',
   path: ['deathYear']
 })

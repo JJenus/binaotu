@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from 'vitest'
 import { createTestDb } from '../db/testing'
 import { KinshipError } from '../../shared/kinship'
-import { addRelative, createFamily, getTree, relationship, searchFamilies } from './family.service'
+import { addRelative, createFamily, getTree, relationship, removePerson, searchFamilies, updatePerson } from './family.service'
 import { seedDemoFamily } from './demo.service'
 import { AppError } from './errors'
 
@@ -66,5 +66,37 @@ describe('family service', async () => {
     expect((await relationship(db, 'ebi', byName('Ebiere'), added.focusId)).label).toBe('First cousin')
     const [summary] = await searchFamilies(db, 'ebi')
     expect(summary).toMatchObject({ slug: 'ebi', personCount: 25, minYear: 1936 })
+  })
+
+  it('edits a person and turns a placeholder into a real person', async () => {
+    const t = await createFamily(db, { name: 'Edit test', visibility: 'public', founder: person('Ada') })
+    const ada = t.persons[0]!
+    const res = await addRelative(db, t.family.slug, ada.id, { relation: 'sibling', person: person('Bem') })
+    const placeholder = res.tree.persons.find(p => p.isPlaceholder)!
+    const edited = await updatePerson(db, t.family.slug, placeholder.id, person('Mama', { sex: 'female', birthYear: 1950, birthPlace: 'Yenagoa', notes: 'Matriarch' }))
+    expect(edited.persons.find(p => p.id === placeholder.id)).toMatchObject({ givenName: 'Mama', sex: 'female', birthYear: 1950, birthPlace: 'Yenagoa', notes: 'Matriarch', isPlaceholder: false })
+    await expect(updatePerson(db, t.family.slug, '00000000-0000-4000-8000-000000000000', person('X'))).rejects.toBeInstanceOf(KinshipError)
+  })
+
+  it('removes a leaf, clears orphaned placeholders, and keeps the rest connected', async () => {
+    const t = await createFamily(db, { name: 'Remove test', visibility: 'public', founder: person('Ada') })
+    const ada = t.persons[0]!
+    const { focusId: bem } = await addRelative(db, t.family.slug, ada.id, { relation: 'sibling', person: person('Bem') })
+    expect((await getTree(db, t.family.slug)).persons).toHaveLength(3) // Ada, Bem, placeholder parent
+    const afterBem = await removePerson(db, t.family.slug, bem)
+    expect(afterBem.persons.map(p => p.givenName).sort()).toEqual(['Ada', 'Unknown'])
+    await expect(removePerson(db, t.family.slug, afterBem.persons.find(p => p.isPlaceholder)!.id)).resolves.toMatchObject({ persons: [{ givenName: 'Ada' }] })
+  })
+
+  it('refuses to remove someone whose removal would strand people, or the last person', async () => {
+    const t = await createFamily(db, { name: 'Guard test', visibility: 'public', founder: person('Ada') })
+    const ada = t.persons[0]!
+    const { focusId: kid } = await addRelative(db, t.family.slug, ada.id, { relation: 'child', person: person('Kid') })
+    const { focusId: grandkid } = await addRelative(db, t.family.slug, kid, { relation: 'child', person: person('Grandkid') })
+    await expect(removePerson(db, t.family.slug, kid)).rejects.toMatchObject({ status: 409 })
+    expect((await getTree(db, t.family.slug)).persons).toHaveLength(3)
+    await removePerson(db, t.family.slug, grandkid)
+    await removePerson(db, t.family.slug, kid)
+    await expect(removePerson(db, t.family.slug, ada.id)).rejects.toMatchObject({ status: 409, message: 'A family needs at least one person' })
   })
 })
