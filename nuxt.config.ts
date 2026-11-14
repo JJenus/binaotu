@@ -15,7 +15,8 @@ export default defineNuxtConfig({
       ]
     }
   },
-  runtimeConfig: { databaseUrl: process.env.DATABASE_URL || '' },
+  // Both are overridden by NUXT_DATABASE_URL / NUXT_SESSION_PASSWORD at runtime.
+  runtimeConfig: { databaseUrl: process.env.DATABASE_URL || '', sessionPassword: '' },
   nitro: {
     serverAssets: [{ baseName: 'migrations', dir: fileURLToPath(new URL('./server/db/migrations', import.meta.url)) }]
   }
