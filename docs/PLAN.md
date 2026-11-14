@@ -81,7 +81,7 @@ sibling), so there is one implementation of each rule.
 
 ## Features
 
-### Phase 1 — Core (current)
+### Phase 1 — Core
 - [x] Plan and project scaffold
 - [x] Database schema, migrations, PGlite/Postgres client
 - [x] Kinship engine: graph, relationship labels, auto-link planner, tiers
@@ -91,13 +91,13 @@ sibling), so there is one implementation of each rule.
 - [x] Add-relative flow with auto-link
 
 ### Phase 2 — Browse
-- [ ] Generation filter and direct jump
-- [ ] Birth-year range slider (dims people outside the range)
-- [ ] "How are we related?" between any two people
-- [ ] Person profile: bio, places, partial dates
+- [x] Generation filter and direct jump
+- [x] Birth-year range slider (dims people outside the range)
+- [x] "How are we related?" between any two people
+- [x] Person profile: birthplace and notes (partial dates still to do)
 
 ### Phase 3 — Edit and quality
-- [ ] Edit and delete person (with link repair)
+- [x] Edit and delete person (removal is refused when it would strand relatives; orphaned placeholders are tidied)
 - [ ] Duplicate detection and merge
 - [ ] Photo upload, GEDCOM import/export
 - [ ] Audit log

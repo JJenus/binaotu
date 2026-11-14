@@ -1,5 +1,5 @@
 import { familiesApi } from '~/api'
-import type { AddRelativeInput } from '#shared/schemas'
+import type { AddRelativeInput, PersonInput } from '#shared/schemas'
 import { generationRows, graphFromTree } from '#shared/kinship'
 
 /** Loads one family and exposes it as a graph. The only place that fetches or mutates a tree. */
@@ -21,5 +21,19 @@ export async function useFamilyTree(slug: string) {
     data.value = result.tree
     return result.focusId
   }
-  return { tree, graph, people, gridRows, addRelative, mutation }
+
+  /** Saves a person’s details. Resolves true on success; on failure see `mutation`. */
+  async function updatePerson(personId: string, input: PersonInput) {
+    const next = await mutation.run(() => familiesApi.updatePerson(slug, personId, input))
+    if (next) data.value = next
+    return !!next
+  }
+
+  /** Removes a person. Resolves true on success; the server refuses when it would strand relatives. */
+  async function removePerson(personId: string) {
+    const next = await mutation.run(() => familiesApi.removePerson(slug, personId))
+    if (next) data.value = next
+    return !!next
+  }
+  return { tree, graph, people, gridRows, addRelative, updatePerson, removePerson, mutation }
 }

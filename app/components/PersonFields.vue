@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { PersonDraft } from '~/utils/personDraft'
 
-defineProps<{ errors?: Record<string, string>, prefix: string }>()
 const draft = defineModel<PersonDraft>({ required: true })
+const props = defineProps<{ errors?: Record<string, string>, prefix: string }>()
+const key = (field: string) => props.prefix ? `${props.prefix}.${field}` : field
 const year = (v: string) => v === '' ? null : Number(v)
 </script>
 
@@ -10,7 +11,7 @@ const year = (v: string) => v === '' ? null : Number(v)
   <div class="grid">
     <label class="field">First name
       <input v-model="draft.givenName" required autocomplete="off">
-      <span v-if="errors?.[`${prefix}.givenName`]" class="error">{{ errors[`${prefix}.givenName`] }}</span>
+      <span v-if="errors?.[key('givenName')]" class="error">{{ errors[key('givenName')] }}</span>
     </label>
     <label class="field">Family name
       <input v-model="draft.familyName" autocomplete="off">
@@ -22,15 +23,22 @@ const year = (v: string) => v === '' ? null : Number(v)
     </label>
     <label class="field">Born (year)
       <input type="number" inputmode="numeric" :value="draft.birthYear ?? ''" @input="draft.birthYear = year(($event.target as HTMLInputElement).value)">
-      <span v-if="errors?.[`${prefix}.birthYear`]" class="error">{{ errors[`${prefix}.birthYear`] }}</span>
+      <span v-if="errors?.[key('birthYear')]" class="error">{{ errors[key('birthYear')] }}</span>
+    </label>
+    <label class="field">Born in
+      <input v-model="draft.birthPlace" autocomplete="off" placeholder="Town or city">
     </label>
     <label class="field">Died (year)
       <input type="number" inputmode="numeric" :value="draft.deathYear ?? ''" @input="draft.deathYear = year(($event.target as HTMLInputElement).value)">
-      <span v-if="errors?.[`${prefix}.deathYear`]" class="error">{{ errors[`${prefix}.deathYear`] }}</span>
+      <span v-if="errors?.[key('deathYear')]" class="error">{{ errors[key('deathYear')] }}</span>
+    </label>
+    <label class="field wide">Notes
+      <textarea v-model="draft.notes" rows="2" placeholder="A line or two about them" />
     </label>
   </div>
 </template>
 
 <style scoped>
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px }
+.wide { grid-column: 1 / -1 }
 </style>

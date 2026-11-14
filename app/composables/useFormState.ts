@@ -20,5 +20,6 @@ export function useFormState() {
       pending.value = false
     }
   }
-  return { pending, error, issues, run }
+  const reset = () => { error.value = null; issues.value = {} }
+  return { pending, error, issues, run, reset }
 }

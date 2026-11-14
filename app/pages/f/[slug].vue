@@ -1,12 +1,14 @@
 <script setup lang="ts">
 const slug = String(useRoute().params.slug)
-const { tree, graph, people, gridRows, addRelative, mutation } = await useFamilyTree(slug)
+const { tree, graph, people, gridRows, addRelative, updatePerson, removePerson, mutation } = await useFamilyTree(slug)
 const view = useTreeView(graph, gridRows)
 const persons = computed(() => tree.value.persons)
 const years = useYearRange(persons)
 
 const profileId = ref<string | null>(null)
 const addingFor = ref<string | null>(null)
+const editingId = ref<string | null>(null)
+const removingId = ref<string | null>(null)
 const profile = useProfile(graph, people, profileId)
 const options = useRelativeOptions(graph, people, addingFor)
 const finder = useRelationFinder(graph, people)
@@ -24,7 +26,11 @@ function openFinder() {
 }
 function showFromFinder(id: string) { finderOpen.value = false; view.setAnchor(id) }
 function jump(id: string) { profileId.value = null; view.setAnchor(id) }
-function startAdd(id: string) { profileId.value = null; mutation.error.value = null; mutation.issues.value = {}; addingFor.value = id }
+function startAdd(id: string) { profileId.value = null; mutation.reset(); addingFor.value = id }
+function startEdit(id: string) { profileId.value = null; mutation.reset(); editingId.value = id }
+function startRemove(id: string) { profileId.value = null; mutation.reset(); removingId.value = id }
+async function submitEdit(input: Parameters<typeof updatePerson>[1]) { if (await updatePerson(editingId.value!, input)) editingId.value = null }
+async function confirmRemove() { if (await removePerson(removingId.value!)) removingId.value = null }
 async function submitRelative(input: Parameters<typeof addRelative>[1]) {
   const id = await addRelative(addingFor.value!, input)
   if (id) { addingFor.value = null; view.setAnchor(id) }
@@ -79,8 +85,19 @@ useHead({ title: () => `${tree.value.family.name} — Binaotu` })
 
     <ProfileSheet
       v-if="profile.person.value" :person="profile.person.value" :lines="profile.lines.value" :family-name="surname"
-      @close="profileId = null" @jump="jump" @branch="jump" @add="startAdd"
+      @close="profileId = null" @jump="jump" @branch="jump" @add="startAdd" @edit="startEdit" @remove="startRemove"
     />
+    <AppModal v-if="editingId" :title="`Edit ${displayName(people.get(editingId)!)}`" @close="editingId = null">
+      <EditPersonForm :person="people.get(editingId)!" :pending="mutation.pending.value" :error="mutation.error.value" :issues="mutation.issues.value" @submit="submitEdit" @cancel="editingId = null" />
+    </AppModal>
+    <AppModal v-if="removingId" :title="`Remove ${displayName(people.get(removingId)!)}?`" @close="removingId = null">
+      <p class="confirm">They will be taken out of the tree along with their links to relatives. This can’t be undone.</p>
+      <p v-if="mutation.error.value" class="error" role="alert">{{ mutation.error.value }}</p>
+      <div class="confirm-actions">
+        <button class="btn ghost" @click="removingId = null">Keep them</button>
+        <button class="btn danger" :disabled="mutation.pending.value" @click="confirmRemove">{{ mutation.pending.value ? 'Removing…' : 'Remove' }}</button>
+      </div>
+    </AppModal>
     <AppModal v-if="finderOpen" title="How are we related?" @close="finderOpen = false">
       <RelationFinder v-model:from="finder.from.value" v-model:to="finder.to.value" :options="finder.options.value" :result="finder.result.value" @swap="finder.swap" @show="showFromFinder" />
     </AppModal>
@@ -107,5 +124,8 @@ h1 { margin: 0; font: 400 30px var(--display) }
 h2 { margin: 2px 0; font: 400 32px/1.05 var(--display) }
 .bar > :nth-child(2) { flex: 1; min-width: 240px }
 .actions { display: flex; gap: 10px; flex-wrap: wrap }
+.confirm { margin: 0 0 12px }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 10px }
+.btn.danger { border-color: var(--danger); background: var(--danger); color: #fff }
 .filters { display: flex; flex-wrap: wrap; gap: 14px 32px; align-items: flex-start; padding: 0 18px 32px }
 </style>
