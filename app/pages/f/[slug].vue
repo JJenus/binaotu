@@ -1,6 +1,10 @@
 <script setup lang="ts">
 const slug = String(useRoute().params.slug)
-const { tree, graph, people, gridRows, addRelative, updatePerson, removePerson, mutation } = await useFamilyTree(slug)
+const { tree, graph, people, gridRows, access, addRelative, updatePerson, removePerson, mutation } = await useFamilyTree(slug)
+const { user } = useAuth()
+const sharing = useSharing(slug)
+const shareOpen = ref(false)
+const hasHidden = computed(() => tree.value.persons.some(x => x.redacted))
 const view = useTreeView(graph, gridRows)
 const persons = computed(() => tree.value.persons)
 const years = useYearRange(persons)
@@ -25,6 +29,7 @@ function openFinder() {
   finderOpen.value = true
 }
 function showFromFinder(id: string) { finderOpen.value = false; view.setAnchor(id) }
+function openShare() { sharing.reset(); void sharing.load(); shareOpen.value = true }
 function jump(id: string) { profileId.value = null; view.setAnchor(id) }
 function startAdd(id: string) { profileId.value = null; mutation.reset(); addingFor.value = id }
 function startEdit(id: string) { profileId.value = null; mutation.reset(); editingId.value = id }
@@ -43,8 +48,16 @@ useHead({ title: () => `${tree.value.family.name} — Binaotu` })
     <header>
       <NuxtLink to="/" class="brand">Binaotu</NuxtLink>
       <h1>{{ surname }}</h1>
-      <span class="count">{{ tree.persons.length }} people</span>
+      <div class="head-right">
+        <span class="count">{{ tree.persons.length }} people<template v-if="access.role"> · you are {{ access.role === 'viewer' ? 'a viewer' : access.role === 'editor' ? 'an editor' : 'the owner' }}</template></span>
+        <AccountMenu />
+      </div>
     </header>
+    <p v-if="hasHidden && !access.role" class="notice">
+      Living relatives are hidden to protect their privacy.
+      <template v-if="!user"><NuxtLink :to="{ path: '/login', query: { next: `/f/${slug}` } }">Sign in</NuxtLink> if you’ve been invited to see everyone.</template>
+      <template v-else>Ask the family’s owner for an invite to see everyone.</template>
+    </p>
 
     <div class="stagewrap">
       <TreeStage
@@ -70,7 +83,8 @@ useHead({ title: () => `${tree.value.family.name} — Binaotu` })
       <TierChips v-if="view.mode.value === 'ring'" :chips="view.chips.value" :active="view.generation.value === null ? view.tierIndex.value : -1" :people="people" @select="view.setTier" />
       <div class="actions">
         <button v-if="view.mode.value === 'ring'" class="btn" @click="profileId = shown.id">Open profile</button>
-        <button class="btn ghost" @click="startAdd(shown.id)">Add a relative</button>
+        <button v-if="access.canEdit" class="btn ghost" @click="startAdd(shown.id)">Add a relative</button>
+        <button v-if="access.canManage" class="btn ghost" @click="openShare">Share</button>
         <button class="btn ghost" @click="openFinder">How are we related?</button>
       </div>
     </div>
@@ -85,8 +99,14 @@ useHead({ title: () => `${tree.value.family.name} — Binaotu` })
 
     <ProfileSheet
       v-if="profile.person.value" :person="profile.person.value" :lines="profile.lines.value" :family-name="surname"
-      @close="profileId = null" @jump="jump" @branch="jump" @add="startAdd" @edit="startEdit" @remove="startRemove"
+      @close="profileId = null" :can-edit="access.canEdit && !profile.person.value.redacted" @jump="jump" @branch="jump" @add="startAdd" @edit="startEdit" @remove="startRemove"
     />
+    <AppModal v-if="shareOpen && user" title="Share this family" @close="shareOpen = false">
+      <ShareDialog
+        :members="sharing.members.value" :invites="sharing.invites.value" :current-user-id="user.id" :pending="sharing.pending.value" :error="sharing.error.value" :link-for="sharing.linkFor"
+        @invite="sharing.invite" @revoke="sharing.revoke" @set-role="sharing.setRole" @remove="sharing.remove"
+      />
+    </AppModal>
     <AppModal v-if="editingId" :title="`Edit ${displayName(people.get(editingId)!)}`" @close="editingId = null">
       <EditPersonForm :person="people.get(editingId)!" :pending="mutation.pending.value" :error="mutation.error.value" :issues="mutation.issues.value" @submit="submitEdit" @cancel="editingId = null" />
     </AppModal>
@@ -115,8 +135,10 @@ useHead({ title: () => `${tree.value.family.name} — Binaotu` })
 <style scoped>
 .tree { min-height: 100vh; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px) }
 header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 16px 18px 0 }
+.head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px }
+.notice { margin: 10px 18px 0; padding: 10px 14px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14px }
 h1 { margin: 0; font: 400 30px var(--display) }
-.count { justify-self: end; color: var(--muted); font-size: 13px }
+.count { color: var(--muted); font-size: 13px }
 .stagewrap { position: relative; margin-top: 10px }
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; padding: 8px 18px 28px }
 .who { display: flex; flex-direction: column; min-width: 190px }

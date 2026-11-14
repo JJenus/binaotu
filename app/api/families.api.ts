@@ -1,11 +1,12 @@
 import type { AddRelativeInput, CreateFamilyInput, PersonInput } from '#shared/schemas'
-import type { AddRelativeResultDTO, FamilySummaryDTO, RelationshipDTO, TreeDTO } from '#shared/types'
+import type { AddRelativeResultDTO, FamilySummaryDTO, RelationshipDTO, Role, TreeDTO } from '#shared/types'
 import { request } from './http'
 
 const family = (slug: string) => `/families/${encodeURIComponent(slug)}`
 
 /** Every family endpoint, one typed function each. Components never call these directly; composables do. */
 export const familiesApi = {
+  mine: () => request<FamilySummaryDTO[]>('/me/families'),
   search: (q: string) => request<FamilySummaryDTO[]>('/families', { query: { q } }),
   create: (input: CreateFamilyInput) => request<TreeDTO>('/families', { method: 'POST', body: input }),
   getTree: (slug: string) => request<TreeDTO>(family(slug)),

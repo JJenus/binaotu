@@ -2,7 +2,7 @@
 import type { PersonDTO } from '#shared/types'
 import type { ProfileLine } from '~/composables/useProfile'
 
-defineProps<{ person: PersonDTO, lines: ProfileLine[], familyName: string }>()
+defineProps<{ person: PersonDTO, lines: ProfileLine[], familyName: string, canEdit: boolean }>()
 defineEmits<{ close: [], jump: [id: string], branch: [id: string], add: [id: string], edit: [id: string], remove: [id: string] }>()
 </script>
 
@@ -25,9 +25,12 @@ defineEmits<{ close: [], jump: [id: string], branch: [id: string], add: [id: str
         <p v-if="!lines.length" class="place">No relatives recorded yet.</p>
         <div class="total"><span>Relatives listed</span><span>{{ lines.length }}</span></div>
         <button class="cta" @click="$emit('branch', person.id)">Show their family</button>
-        <button class="cta ghost" @click="$emit('add', person.id)">Add a relative</button>
-        <button class="cta ghost" @click="$emit('edit', person.id)">{{ person.isPlaceholder ? 'Fill in their details' : 'Edit details' }}</button>
-        <button class="danger" @click="$emit('remove', person.id)">Remove from tree</button>
+        <template v-if="canEdit">
+          <button class="cta ghost" @click="$emit('add', person.id)">Add a relative</button>
+          <button class="cta ghost" @click="$emit('edit', person.id)">{{ person.isPlaceholder ? 'Fill in their details' : 'Edit details' }}</button>
+          <button class="danger" @click="$emit('remove', person.id)">Remove from tree</button>
+        </template>
+        <p v-if="person.redacted" class="place">Details of living people are private.</p>
       </div>
     </div>
   </div>

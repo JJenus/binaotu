@@ -14,10 +14,11 @@ function toApiError(e: any): ApiError {
   return new ApiError(status, message, e?.data?.data?.issues ?? [])
 }
 
-/** Single place that knows the base URL and how failures are shaped. */
+/** Single place that knows the base URL and how failures are shaped. On the server it forwards the visitor’s cookies so sign-in carries through rendering. */
 export async function request<T>(path: string, options: Parameters<typeof $fetch>[1] = {}): Promise<T> {
+  const fetcher = (import.meta.server ? useRequestFetch() : $fetch) as typeof $fetch
   try {
-    return await $fetch<T>(path, { baseURL: '/api', ...options }) as T
+    return await fetcher<T>(path, { baseURL: '/api', ...options }) as T
   } catch (e) {
     throw toApiError(e)
   }

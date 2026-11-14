@@ -13,6 +13,7 @@ person* and the system links siblings, aunts, uncles and cousins itself.
 | API | Nitro routes in `server/api` | Thin handlers, no separate service yet |
 | DB | PostgreSQL via Drizzle ORM | Real SQL; PGlite (in-process Postgres) is used when `DATABASE_URL` is unset, so dev and tests need no setup |
 | Validation | Zod, shared by server and client | One schema, one source of truth |
+| Auth | Email + password (scrypt), sealed HttpOnly session cookie via h3 | No external service or extra dependency |
 | Package manager | pnpm | Fast, strict dependency tree |
 | Tests | Vitest | The kinship engine is pure and fully unit-tested |
 
@@ -96,15 +97,17 @@ sibling), so there is one implementation of each rule.
 - [x] "How are we related?" between any two people
 - [x] Person profile: birthplace and notes (partial dates still to do)
 
-### Phase 3 — Edit and quality (current)
+### Phase 3 — Edit and quality
 - [x] Edit and delete person (removal is refused when it would strand relatives; orphaned placeholders are tidied)
 - [ ] Duplicate detection and merge
 - [ ] Photo upload, GEDCOM import/export
 - [ ] Audit log
 
-### Phase 4 — Accounts and privacy
-- [ ] Sign-in; owner, editor, viewer roles; invite links
-- [ ] Living-person privacy, edit suggestions with approval
+### Phase 4 — Accounts and privacy (current)
+- [x] Sign-in; owner, editor, viewer roles; invite links
+- [x] Living-person privacy (presumed-living people are redacted for non-members)
+- [ ] Edit suggestions with approval
+- [ ] Account management: change password, delete account, password reset by email
 
 ## Conventions
 - One commit per feature, conventional messages (`feat:`, `fix:`, `chore:`, `docs:`).

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ middleware: 'auth' })
 const route = useRoute()
 const { form, pending, error, issues, submit } = useCreateFamily(typeof route.query.name === 'string' ? route.query.name : '')
 useHead({ title: 'Start a family tree — Binaotu' })
@@ -18,7 +19,7 @@ useHead({ title: 'Start a family tree — Binaotu' })
       <label class="field">Who can find it
         <select v-model="form.visibility">
           <option value="public">Anyone can search for it</option>
-          <option value="private">Only people with the link</option>
+          <option value="private">Only people you invite</option>
         </select>
       </label>
       <fieldset>

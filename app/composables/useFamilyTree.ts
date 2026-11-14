@@ -13,6 +13,7 @@ export async function useFamilyTree(slug: string) {
   const people = computed(() => new Map(tree.value.persons.map(p => [p.id, p])))
   const gridRows = computed(() => generationRows(graph.value))
   const mutation = useFormState()
+  const access = computed(() => tree.value.access)
 
   /** Adds a relative to `anchorId`; resolves to the new person’s id, or undefined if it failed (see `mutation`). */
   async function addRelative(anchorId: string, input: AddRelativeInput) {
@@ -35,5 +36,5 @@ export async function useFamilyTree(slug: string) {
     if (next) data.value = next
     return !!next
   }
-  return { tree, graph, people, gridRows, addRelative, updatePerson, removePerson, mutation }
+  return { tree, graph, people, gridRows, access, addRelative, updatePerson, removePerson, mutation }
 }
